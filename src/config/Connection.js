@@ -2,7 +2,7 @@ const { default: mongoose } = require("mongoose")
 
 async function MongoDBConnection() {
     try {
-        const res = await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://admin:admin@pavandeepcluster.ogug7qv.mongodb.net/auth')
+        const res = await mongoose.connect(process.env.MONGO_URI)
         if (res) {
             console.log("mongodb connection is established")
         }

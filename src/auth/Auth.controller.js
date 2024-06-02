@@ -1,31 +1,11 @@
+const { validateUserInput } = require("../utility/validation");
 const User = require("./Auth.model");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken')
+const jwtSecret = '4715aed3c946f7b0a38e6b534a9583628d84e96d10fbc04700770d572af3dce43625dd'
 
-const validateUserInput = (user) => {
-    let errors = [];
-
-    if (!user.name) errors.push("Name is required");
-    if (!user.email) {
-        errors.push("Email is required");
-    }
-    if (!user.password) {
-        errors.push("Password is required");
-    } else if (user.password.length < 8) {
-        errors.push("Password must be at least 8 characters long");
-    } else if (!/\d/.test(user.password)) {
-        errors.push("Password must contain at least one number");
-    } else if (!/[a-z]/.test(user.password)) {
-        errors.push("Password must contain at least one lowercase letter");
-    } else if (!/[A-Z]/.test(user.password)) {
-        errors.push("Password must contain at least one uppercase letter");
-    }
-
-    return errors;
-};
-
-const LoginController = async (req, res) => {
+const SignupController = async (req, res) => {
     const user = req.body;
-
     // Validate user input
     const errors = validateUserInput(user);
     if (errors.length > 0) {
@@ -59,6 +39,61 @@ const LoginController = async (req, res) => {
     }
 };
 
+const LoginController = async (req, res) => {
+    const user = req.body;
+
+    if (!user.email) {
+        return res.status(403).json({ status: false, error: "Please enter a valid email" });
+    }
+
+    if (!user.password) {
+        return res.status(403).json({ status: false, error: "Please enter a valid password" });
+    }
+
+    const email = user.email;
+
+    try {
+        const response = await User.findOne({ email });
+
+        if (!response) {
+            return res.status(404).json({ status: false, error: "User not found" });
+        }
+
+        const passwordMatch = await bcrypt.compare(user.password, response.password);
+
+        if (!passwordMatch) {
+            return res.status(403).json({ status: false, error: "Password mismatch" });
+        }
+
+        const maxAge = 3 * 60 * 60;
+        const token = jwt.sign(
+            { id: response._id, email: response.email },
+            jwtSecret,
+            { expiresIn: maxAge } // 3 hours in seconds
+        );
+
+        
+        const userResponse = {
+            id: response._id,
+            email: response.email,
+            name: response.name
+        };
+
+        return res.json({
+            status: true,
+            data: {
+                user: userResponse,
+                token: token
+            }
+        });
+    } catch (error) {
+        console.log("error", error);
+        return res.status(403).json({ status: false, error: error.message });
+    }
+};
+
+
 module.exports = {
-    LoginController,
+    SignupController,
+    LoginController
 };

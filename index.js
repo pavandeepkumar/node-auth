@@ -1,10 +1,10 @@
 const express = require('express');
+require('dotenv').config()
 const { MongoDBConnection } = require('./src/config/Connection');
 const userRouter = require('./src/auth/AuthRoutes');
 const app = express();
 app.use(express.json());
-
-PORT = 8080;
+PORT = process.env.PORT || 8080;
 MongoDBConnection()
-app.use('/api/v1/user',userRouter)
+app.use('/api/v1/user', userRouter)
 app.listen(PORT, () => console.log(`Port is running at ${PORT}`))
