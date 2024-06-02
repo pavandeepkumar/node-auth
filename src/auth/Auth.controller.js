@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken')
 const jwtSecret = '4715aed3c946f7b0a38e6b534a9583628d84e96d10fbc04700770d572af3dce43625dd'
 
+// DEFINE SIGNUP FUNCTION 
 const SignupController = async (req, res) => {
     const user = req.body;
     // Validate user input
@@ -39,6 +40,7 @@ const SignupController = async (req, res) => {
     }
 };
 
+// DEFINE LOGIN FUNCTION
 const LoginController = async (req, res) => {
     const user = req.body;
 
@@ -93,7 +95,7 @@ const LoginController = async (req, res) => {
 };
 
 
-
+// DEFINE DELETE USER FUNCTIONS
 const DeleteUser = async (req, res) => {
     const { id } = req.params;
     if (!id) {
@@ -111,7 +113,7 @@ const DeleteUser = async (req, res) => {
 
 }
 
-
+// DEFINE UPDATE USER FUNCTION
 const UpdateUser = async (req, res) => {
     const { id } = req.params;
     const { email, name, password } = req.body;
