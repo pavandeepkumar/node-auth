@@ -4,7 +4,7 @@ const { ProductCreateController, ProductGetAllController, ProductGetByIdControll
 const productRouter = express.Router()
 productRouter.post(ROUTE.PRODUCT.CREATE, ProductCreateController)
 productRouter.get(ROUTE.PRODUCT.LIST, ProductGetAllController)
-productRouter.get(ROUTE.PRODUCT.ID, ProductGetByIdController)
+productRouter.get(`${ROUTE.PRODUCT.ID}/:id`, ProductGetByIdController)
 productRouter.delete(`${ROUTE.PRODUCT.DELETE}/:id`, ProductDeleteController)
 productRouter.put(`${ROUTE.PRODUCT.UPDATE}/:id`, ProductUpdateController)
 module.exports = productRouter
