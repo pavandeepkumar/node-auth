@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { validateUserInput } = require("../utility/validation");
 const User = require("./Auth.model");
 const bcrypt = require("bcryptjs");
@@ -30,7 +31,6 @@ const SignupController = async (req, res) => {
         // Create new user
         const response = await User.create(userData);
         if (response) {
-            console.log("User is created successfully");
             return res.status(201).json(response);
         }
     } catch (error) {
@@ -72,7 +72,7 @@ const LoginController = async (req, res) => {
             { expiresIn: maxAge } // 3 hours in seconds
         );
 
-        
+
         const userResponse = {
             id: response._id,
             email: response.email,
@@ -93,7 +93,69 @@ const LoginController = async (req, res) => {
 };
 
 
+
+const DeleteUser = async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(404).json({ status: false, error: "Id required" });
+    }
+    try {
+        const response = await User.findByIdAndDelete(id);
+        if (!response) {
+            return res.status(404).json({ status: false, error: "error in deleting user" });
+        }
+        return res.json({ status: true, msg: "User deleted successfully" });
+    } catch (error) {
+        return res.status(404).json({ status: false, error: error.message });
+    }
+
+}
+
+
+const UpdateUser = async (req, res) => {
+    const { id } = req.params;
+    const { email, name, password } = req.body;
+
+    if (!id) {
+        return res.status(404).json({ status: false, error: "ID required" });
+    }
+
+    if (!email || !name || !password) {
+        return res.status(400).json({ status: false, error: "Email, name, and password are required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ status: false, error: "Invalid ID format" });
+    }
+
+    try {
+        const existingUser = await User.findOne({ email });
+        if (existingUser && existingUser._id.toString() !== id) {
+            return res.status(400).json({ status: false, error: "Email already in use" });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ status: false, error: "User not found" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.email = email;
+        user.name = name;
+        user.password = hashedPassword;
+
+        const updatedUser = await user.save();
+        return res.json({ status: true, message: "user updated successfully", user: updatedUser });
+
+    } catch (error) {
+        return res.status(500).json({ status: false, error: error.message });
+    }
+};
+
+
 module.exports = {
     SignupController,
-    LoginController
+    LoginController,
+    DeleteUser,
+    UpdateUser
 };
