@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
     },
     discount: {
         type: Number,
-        default: 0, // Default value if no discount is provided
+        default: 0, 
     },
     description: {
         type: String,
