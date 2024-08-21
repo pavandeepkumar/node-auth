@@ -21,13 +21,13 @@ const ProductCreateController = async (req, res) => {
 
 const ProductGetAllController = async (req, res) => {
     const { userId } = req.body;
-   try {
-    const product = await Product.find({ userId })
-    return res.json({ success: true, message: 'fetch all product successfully', product: product });
-   } catch (error) {
-    console.log("error in fetching all products ")
-return res.json({ success: false, message:"Failed to fetch all products"})
-   }
+    try {
+        const product = await Product.find({ userId })
+        return res.json({ success: true, message: 'fetch all product successfully', product: product });
+    } catch (error) {
+        console.log("error in fetching all products ")
+        return res.json({ success: false, message: "Failed to fetch all products" });
+    }
 }
 
 // DEFINE FUNCTION TO GET PRODUCT BY PRODUCT ID
@@ -37,7 +37,7 @@ const ProductGetByIdController = async (req, res) => {
     const { id } = req.params
     try {
         const product = await Product.find({ userId })
-        
+
         if (!product) {
             return res.json({ success: false, message: 'product not found', })
         }
