@@ -10,3 +10,5 @@ MongoDBConnection()
 app.use('/api/v1/user', userRouter)
 app.use('/api/v1/product', productRouter)
 app.listen(PORT, () => console.log(`Port is running at ${PORT}`))
+
+module.exports={app};
