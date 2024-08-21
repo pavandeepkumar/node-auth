@@ -18,8 +18,8 @@ const ProductCreateController = async (req, res) => {
         }
     } catch (error) {
 
-        console.log("error in Product.create",error)
-        return res.json({ status: false , message: error.message });
+        console.log("error in Product.create", error)
+        return res.json({ status: false, message: error.message });
     }
 
 }
