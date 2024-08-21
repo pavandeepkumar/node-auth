@@ -4,6 +4,7 @@ const ROUTE = {
         SIGNUP: '/signup',
         DELETE: '/delete',
         UPDATE: '/update',
+        GETALL:'/all'
     },
     PRODUCT: {
         CREATE: '/create',

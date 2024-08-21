@@ -154,10 +154,22 @@ const UpdateUser = async (req, res) => {
     }
 };
 
+const GetAllUsersController = async (req, res, next) => {
+    try {
+        const result = await User.find({})
+        if (!result) {
+            return res.status(404).json({ status: false, message: "No Users found" });
+        }
+        return res.json({ status: true, data: result });
+    } catch (error) {
 
+        return res.status(500).json({ status: false, error: error });
+    }
+}
 module.exports = {
     SignupController,
     LoginController,
     DeleteUser,
-    UpdateUser
+    UpdateUser,
+    GetAllUsersController
 };

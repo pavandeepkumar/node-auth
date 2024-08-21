@@ -10,9 +10,16 @@ const ProductCreateController = async (req, res) => {
         const response = await Product.create({
             userId, name, price, image, description, discount, productDetails
         })
-        return res.json({ success: true, message: 'Create Product successfully', product: response });
+        if (response) {
+            return res.json({ success: true, message: 'Create Product successfully', product: response });
+        }
+        else {
+            return res.json({ status: false, message: "Product creation failed" });
+        }
     } catch (error) {
-        console.log("error in Product.create")
+
+        console.log("error in Product.create",error)
+        return res.json({ status: false , message: error.message });
     }
 
 }
