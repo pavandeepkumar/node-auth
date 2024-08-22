@@ -2,13 +2,14 @@ const Product = require("./Product.model");
 
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res) => {
-    const { name, price, image, description, discount, productDetails } = req.body;
-    if (!name && !price && !image && !description && !discount) {
+    const { userId, name, price, image, description, discount, productDetails } = req.body;
+    console.log("req.body", req.body)
+    if (!userId && !name && !price && !image && !description && !discount) {
         return res.json({ status: false, message: "Please enter all required fields" })
     }
     try {
         const response = await Product.create({
-            name, price, image, description, discount, productDetails
+            userId, name, price, image, description, discount, productDetails
         })
         if (response) {
             return res.json({ success: true, message: 'Create Product successfully', product: response });
