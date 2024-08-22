@@ -29,7 +29,7 @@ const ProductCreateController = async (req, res) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
-    const { userId } = req.body;
+    const { userId } = req.params;
 
     // Check if userId is provided
     if (!userId) {
