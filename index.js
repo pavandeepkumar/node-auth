@@ -1,11 +1,13 @@
 const express = require('express');
 require('dotenv').config()
+const cors = require('cors');
 const { MongoDBConnection } = require('./src/config/Connection');
 const userRouter = require('./src/auth/AuthRoutes');
 const productRouter = require('./src/product/ProductRoute');
 const app = express();
 app.use(express.json());
-PORT = process.env.PORT || 8080;
+app.use(cors());
+PORT = process.env.PORT || 8050;
 MongoDBConnection()
 app.get('/', (req, res) => {
   return res.json({
