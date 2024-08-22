@@ -157,6 +157,7 @@ const UpdateUser = async (req, res) => {
 const GetAllUsersController = async (req, res, next) => {
     try {
         const result = await User.find({})
+        console.log("result", result)
         if (!result) {
             return res.status(404).json({ status: false, message: "No Users found" });
         }

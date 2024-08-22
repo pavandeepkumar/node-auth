@@ -2,13 +2,13 @@ const Product = require("./Product.model");
 
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res) => {
-    const { userId, name, price, image, description, discount, productDetails } = req.body;
-    if (!userId && !name && !price && !image && !description && !discount) {
+    const { name, price, image, description, discount, productDetails } = req.body;
+    if (!name && !price && !image && !description && !discount) {
         return res.json({ status: false, message: "Please enter all required fields" })
     }
     try {
         const response = await Product.create({
-            userId, name, price, image, description, discount, productDetails
+            name, price, image, description, discount, productDetails
         })
         if (response) {
             return res.json({ success: true, message: 'Create Product successfully', product: response });
@@ -27,15 +27,31 @@ const ProductCreateController = async (req, res) => {
 // DEFINE FUNCTION TO GET ALL PRODUCT
 
 const ProductGetAllController = async (req, res) => {
+    console.log("Incoming request to fetch all products");
     const { userId } = req.body;
+
+    // Check if userId is provided
+    if (!userId) {
+        return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
     try {
-        const product = await Product.find({ userId })
-        return res.json({ success: true, message: 'fetch all product successfully', product: product });
+        const products = await Product.find({});
+
+        // Handle the case where no products are found
+        if (products && products.length === 0) {
+            return res.status(404).json({ success: true, message: "No products found", products: [] });
+        }
+
+        console.log("Products fetched successfully:", products);
+        return res.status(200).json({ success: true, message: 'Fetched all products successfully', products: products });
+
     } catch (error) {
-        console.log("error in fetching all products ")
-        return res.json({ success: false, message: "Failed to fetch all products" });
+        console.error("Error in fetching all products:", error.message);
+        return res.status(500).json({ success: false, message: "Failed to fetch all products", error: error.message });
     }
 }
+
 
 // DEFINE FUNCTION TO GET PRODUCT BY PRODUCT ID
 
@@ -43,7 +59,8 @@ const ProductGetByIdController = async (req, res) => {
     const { userId } = req.body
     const { id } = req.params
     try {
-        const product = await Product.find({ userId })
+        const product = await Product.find({ _id: id })
+        console.log("product", product)
 
         if (!product) {
             return res.json({ success: false, message: 'product not found', })
@@ -61,23 +78,58 @@ const ProductGetByIdController = async (req, res) => {
 // DEFINE FUNCTION TO UPDATE PRODUCT
 
 const ProductUpdateController = async (req, res) => {
-    const { id } = req.params
+    const { id } = req.params;
+    const updateData = req.body;
+
     try {
-        const product = await Product.findById({ id })
-        if (product) {
-            return res.json({ success: true, message: 'update product', product: product });
+        // Find the product by id
+        const product = await Product.findById(id);
+
+        // Check if product exists
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
         }
+
+        // Update the product with new data
+        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+
+        // Return the updated product
+        return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
+
     } catch (error) {
-        return res.json({ error: error });
+        console.error("Error updating product:", error.message);
+        return res.status(500).json({ success: false, message: 'Failed to update product', error: error.message });
     }
-}
+};
+
 
 
 // DEFINE FUNCTION TO DELETE PRODUCT
 
-const ProductDeleteController = (req, res) => {
-    return res.json({ success: true, message: 'delete product' });
-}
+const ProductDeleteController = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Find the product by id
+        const product = await Product.findById(id);
+
+        // Check if product exists
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        // Delete the product
+        await Product.findByIdAndDelete(id);
+
+        // Return success response
+        return res.status(200).json({ success: true, message: 'Product deleted successfully' });
+
+    } catch (error) {
+        console.error("Error deleting product:", error.message);
+        return res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });
+    }
+};
+
 
 module.exports = {
     ProductCreateController,
