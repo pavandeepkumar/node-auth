@@ -8,7 +8,7 @@ const ROUTE = {
     },
     PRODUCT: {
         CREATE: '/create',
-        LIST: '/list/:userId',
+        LIST: '/list/',
         ID: '/product',
         UPDATE: '/update',
         DELETE: '/delete',
