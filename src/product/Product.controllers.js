@@ -36,7 +36,7 @@ const ProductGetAllController = async (req, res) => {
     }
 
     try {
-        const products = await Product.find({});
+        const products = await Product.find({ userId });
 
         // Handle the case where no products are found
         if (products && products.length === 0) {
