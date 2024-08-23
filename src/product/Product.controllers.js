@@ -37,7 +37,7 @@ const ProductGetAllController = async (req, res) => {
     }
 
     const { id } = req.user;
-    const resultsPerPage = req.query.limit;
+    const resultsPerPage = req.query.limit ?? 10;
     console.log("result per page", resultsPerPage)
 
     let page = req.query.page >= 1 ? req.query.page : 1;
