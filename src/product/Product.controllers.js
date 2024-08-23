@@ -31,26 +31,26 @@ const ProductCreateController = async (req, res) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
-    const token = req.headers.authorization
-    if (!token) {
-        return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    const tokenValue = token.split(" ")[1]
-    const tokenDecoded = jwt.verify(tokenValue, process.env.JWT_SECRET)
-    console.log(
-        "tokenDecoded", tokenDecoded
-    )
-    if (!tokenDecoded) {
-        return res.status(401).json({ success: false, message: "Invalid token" });
-    }
-    // const { userId } = req.params;
-    // // Check if userId is provided
-    // if (!userId) {
-    //     return res.status(400).json({ success: false, message: "User ID is required" });
+    // const token = req.headers.authorization
+    // if (!token) {
+    //     return res.status(401).json({ success: false, message: "Unauthorized" });
     // }
+    // const tokenValue = token.split(" ")[1]
+    // const tokenDecoded = jwt.verify(tokenValue, process.env.JWT_SECRET)
+    // console.log(
+    //     "tokenDecoded", tokenDecoded
+    // )
+    // if (!tokenDecoded) {
+    //     return res.status(401).json({ success: false, message: "Invalid token" });
+    // }
+    const { userId } = req.params;
+    // Check if userId is provided
+    if (!userId) {
+        return res.status(400).json({ success: false, message: "User ID is required" });
+    }
 
     try {
-        const products = await Product.find({ userId: tokenDecoded?.id }).select('-image');
+        const products = await Product.find({ userId }).select('-image');
 
         // Handle the case where no products are found
         if (products && products.length === 0) {
