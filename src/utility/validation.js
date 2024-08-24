@@ -1,6 +1,5 @@
 const validateUserInput = (user) => {
     let errors = [];
-
     if (!user.name) errors.push("Name is required");
     if (!user.email) {
         errors.push("Email is required");
@@ -16,7 +15,6 @@ const validateUserInput = (user) => {
     } else if (!/[A-Z]/.test(user.password)) {
         errors.push("Password must contain at least one uppercase letter");
     }
-
     return errors;
 };
 

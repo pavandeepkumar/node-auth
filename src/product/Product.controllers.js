@@ -1,7 +1,7 @@
-const Product = require("./Product.model");
+const Product = require("./product.model");
 
 // DEFINE PRODUCT CREATE CONTROLLER
-const ProductCreateController = async (req, res) => {
+const ProductCreateController = async (req, res, next) => {
     const { name, price, image, description, discount, productDetails } = req.body;
     const { id: userId } = req.user;
     console.log("req.body", req.body)
@@ -43,8 +43,10 @@ const ProductGetAllController = async (req, res) => {
     let page = req.query.page >= 1 ? req.query.page : 1;
     console.log("page", page)
     const query = req.query.search;
+    console.log("object query", query)
+    const totalCount=await Product.countDocuments({userId: id}).lean()
     try {
-        const products = await Product.find({ userId: id }).select('-image').limit(resultsPerPage).skip((page - 1) * resultsPerPage);
+        const products = await Product.find({ userId: id }).select('-image').limit(resultsPerPage).skip((page - 1) * resultsPerPage).lean();
 
         // Handle the case where no products are found
         if (!products || products.length === 0) {
@@ -53,7 +55,13 @@ const ProductGetAllController = async (req, res) => {
         }
 
         console.log("Products fetched successfully:", products);
-        return res.status(200).json({ success: true, message: 'Fetched all products successfully', products });
+        const payload={
+            totalCount,
+            PerPage: resultsPerPage,
+            currentPage: page,
+            product: products
+        }
+        return res.status(200).json({ success: true, message: 'Fetched all products successfully', data: payload});
 
     } catch (error) {
         console.error("Error in fetching all products:", error.message);

@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const { validateUserInput } = require("../utility/validation");
-const User = require("./Auth.model");
+const User = require("./user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken')
 const jwtSecret = process.env.JWT_SECRET
