@@ -1,10 +1,9 @@
 const Product = require("./Product.model");
 
-const jwt = require('jsonwebtoken')
-
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res) => {
-    const { userId, name, price, image, description, discount, productDetails } = req.body;
+    const { name, price, image, description, discount, productDetails } = req.body;
+    const { id: userId } = req.user;
     console.log("req.body", req.body)
     if (!userId && !name && !price && !image && !description && !discount) {
         return res.json({ status: false, message: "Please enter all required fields" })
@@ -31,46 +30,50 @@ const ProductCreateController = async (req, res) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
-    // const token = req.headers.authorization
-    // if (!token) {
-    //     return res.status(401).json({ success: false, message: "Unauthorized" });
-    // }
-    // const tokenValue = token.split(" ")[1]
-    // const tokenDecoded = jwt.verify(tokenValue, process.env.JWT_SECRET)
-    // console.log(
-    //     "tokenDecoded", tokenDecoded
-    // )
-    // if (!tokenDecoded) {
-    //     return res.status(401).json({ success: false, message: "Invalid token" });
-    // }
-    const { userId } = req.params;
-    // Check if userId is provided
-    if (!userId) {
-        return res.status(400).json({ success: false, message: "User ID is required" });
+
+    if (!req.user || !req.user.id) {
+        console.error("Invalid or missing user ID in request");
+        return res.status(400).json({ success: false, message: "Invalid or missing Token" });
     }
 
+    const { id } = req.user;
+    const resultsPerPage = req.query.limit ?? 10;
+    console.log("result per page", resultsPerPage)
+
+    let page = req.query.page >= 1 ? req.query.page : 1;
+    console.log("page", page)
+    const query = req.query.search;
     try {
-        const products = await Product.find({ userId }).select('-image');
+        const products = await Product.find({ userId: id }).select('-image').limit(resultsPerPage).skip((page - 1) * resultsPerPage);
 
         // Handle the case where no products are found
-        if (products && products.length === 0) {
+        if (!products || products.length === 0) {
+            console.log("No products found for user ID:", id);
             return res.status(404).json({ success: true, message: "No products found", products: [] });
         }
 
         console.log("Products fetched successfully:", products);
-        return res.status(200).json({ success: true, message: 'Fetched all products successfully', products: products });
+        return res.status(200).json({ success: true, message: 'Fetched all products successfully', products });
 
     } catch (error) {
         console.error("Error in fetching all products:", error.message);
+
+        // Handle specific known errors if needed
+        if (error.name === 'CastError') {
+            return res.status(400).json({ success: false, message: "Invalid user ID format", error: error.message });
+        }
+
+        // General error handling
         return res.status(500).json({ success: false, message: "Failed to fetch all products", error: error.message });
     }
 }
 
 
+
 // DEFINE FUNCTION TO GET PRODUCT BY PRODUCT ID
 
 const ProductGetByIdController = async (req, res) => {
-    const { userId } = req.body
+
     const { id } = req.params
     try {
         const product = await Product.find({ _id: id })
@@ -94,7 +97,9 @@ const ProductGetByIdController = async (req, res) => {
 const ProductUpdateController = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
-
+    const { id: userId } = req.user;
+    const updatedData = { ...updateData, userId };
+    console.log("updated data: ", updatedData)
     try {
         // Find the product by id
         const product = await Product.findById(id);
@@ -105,7 +110,7 @@ const ProductUpdateController = async (req, res) => {
         }
 
         // Update the product with new data
-        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+        const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
         // Return the updated product
         return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
