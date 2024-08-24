@@ -1,3 +1,4 @@
+const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
 
 // DEFINE PRODUCT CREATE CONTROLLER
@@ -6,22 +7,23 @@ const ProductCreateController = async (req, res, next) => {
     const { id: userId } = req.user;
     console.log("req.body", req.body)
     if (!userId && !name && !price && !image && !description && !discount) {
-        return res.json({ status: false, message: "Please enter all required fields" })
+        error(res, "validation failed", 400)
     }
     try {
         const response = await Product.create({
             userId, name, price, image, description, discount, productDetails
         })
         if (response) {
-            return res.json({ success: true, message: 'Create Product successfully', product: response });
+            
+            success(res, "success", 201, response, "Product created successfully")
         }
         else {
-            return res.json({ status: false, message: "Product creation failed" });
+            error(res, "error", 404, response, "Product")
         }
     } catch (error) {
 
         console.log("error in Product.create", error)
-        return res.json({ status: false, message: error.message });
+        error(res, "error", 500, error, "Product Create Failed")
     }
 
 }
@@ -30,10 +32,9 @@ const ProductCreateController = async (req, res, next) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
-
     if (!req.user || !req.user.id) {
         console.error("Invalid or missing user ID in request");
-        return res.status(400).json({ success: false, message: "Invalid or missing Token" });
+        error(res, "Invalid or missing Token", 400)
     }
 
     const { id } = req.user;
@@ -44,32 +45,29 @@ const ProductGetAllController = async (req, res) => {
     console.log("page", page)
     const query = req.query.search;
     console.log("object query", query)
-    const totalCount=await Product.countDocuments({userId: id}).lean()
+    const totalCount = await Product.countDocuments({ userId: id }).lean()
     try {
         const products = await Product.find({ userId: id }).select('-image').limit(resultsPerPage).skip((page - 1) * resultsPerPage).lean();
 
         // Handle the case where no products are found
         if (!products || products.length === 0) {
             console.log("No products found for user ID:", id);
-            return res.status(404).json({ success: true, message: "No products found", products: [] });
+            customResponse(res, 404, 404, products, "No products found ")
         }
 
         console.log("Products fetched successfully:", products);
-        const payload={
+        const payload = {
             totalCount,
             PerPage: resultsPerPage,
             currentPage: page,
             product: products
         }
-        return res.status(200).json({ success: true, message: 'Fetched all products successfully', data: payload});
+        success(res, "Successfully fetched all products", 200, payload)
 
-    } catch (error) {
+    } catch (err) {
         console.error("Error in fetching all products:", error.message);
 
-        // Handle specific known errors if needed
-        if (error.name === 'CastError') {
-            return res.status(400).json({ success: false, message: "Invalid user ID format", error: error.message });
-        }
+        error(res, "Error in fetching all products", 500)
 
         // General error handling
         return res.status(500).json({ success: false, message: "Failed to fetch all products", error: error.message });
@@ -83,17 +81,18 @@ const ProductGetAllController = async (req, res) => {
 const ProductGetByIdController = async (req, res) => {
 
     const { id } = req.params
+    const { id: userId } = req.user
+
     try {
-        const product = await Product.find({ _id: id })
+        const product = await Product.find({ userId, _id: id })
+
         console.log("product", product)
 
         if (!product) {
             return res.json({ success: false, message: 'product not found', })
         }
         if (product) {
-            const productById = await product.find((product) => product._id == id)
-
-            return res.json({ success: true, message: 'product fetch successfully', product: productById });
+            success(res, "success", 200, product)
         }
     } catch (error) {
         return res.json({ success: false, error: error });
@@ -121,7 +120,8 @@ const ProductUpdateController = async (req, res) => {
         const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
         // Return the updated product
-        return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
+        success(res, 'Product updated successfully', 200, updatedProduct)
+        // return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
 
     } catch (error) {
         console.error("Error updating product:", error.message);
@@ -149,7 +149,8 @@ const ProductDeleteController = async (req, res) => {
         await Product.findByIdAndDelete(id);
 
         // Return success response
-        return res.status(200).json({ success: true, message: 'Product deleted successfully' });
+        success(res, 'Product deleted successfully',200)
+        // return res.status(200).json({ success: true, message: 'Product deleted successfully' });
 
     } catch (error) {
         console.error("Error deleting product:", error.message);
