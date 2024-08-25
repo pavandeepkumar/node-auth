@@ -1,28 +1,30 @@
-const Product = require("./Product.model");
-
-const jwt = require('jsonwebtoken')
+// const redis = require("../config/RadisConnection");
+const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
+const Product = require("./product.model");
 
 // DEFINE PRODUCT CREATE CONTROLLER
-const ProductCreateController = async (req, res) => {
-    const { userId, name, price, image, description, discount, productDetails } = req.body;
+const ProductCreateController = async (req, res, next) => {
+    const { name, price, image, description, discount, productDetails } = req.body;
+    const { id: userId } = req.user;
     console.log("req.body", req.body)
     if (!userId && !name && !price && !image && !description && !discount) {
-        return res.json({ status: false, message: "Please enter all required fields" })
+        error(res, "validation failed", 400)
     }
     try {
         const response = await Product.create({
             userId, name, price, image, description, discount, productDetails
         })
         if (response) {
-            return res.json({ success: true, message: 'Create Product successfully', product: response });
+
+            success(res, "success", 201, response, "Product created successfully")
         }
         else {
-            return res.json({ status: false, message: "Product creation failed" });
+            error(res, "error", 404, response, "Product")
         }
     } catch (error) {
 
         console.log("error in Product.create", error)
-        return res.json({ status: false, message: error.message });
+        error(res, "error", 500, error, "Product Create Failed")
     }
 
 }
@@ -31,58 +33,78 @@ const ProductCreateController = async (req, res) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
-    // const token = req.headers.authorization
-    // if (!token) {
-    //     return res.status(401).json({ success: false, message: "Unauthorized" });
-    // }
-    // const tokenValue = token.split(" ")[1]
-    // const tokenDecoded = jwt.verify(tokenValue, process.env.JWT_SECRET)
-    // console.log(
-    //     "tokenDecoded", tokenDecoded
-    // )
-    // if (!tokenDecoded) {
-    //     return res.status(401).json({ success: false, message: "Invalid token" });
-    // }
-    const { userId } = req.params;
-    // Check if userId is provided
-    if (!userId) {
-        return res.status(400).json({ success: false, message: "User ID is required" });
+
+    if (!req.user || !req.user.id) {
+        console.error("Invalid or missing user ID in request");
+        return error(res, "Invalid or missing Token", 400); // Added return to prevent further execution
     }
 
+    const { id } = req.user;
+    const resultsPerPage = req.query.limit ?? 10;
+    console.log("Results per page", resultsPerPage);
+
+    let page = req.query.page >= 1 ? req.query.page : 1;
+    console.log("Page", page);
+    const query = req.query.search;
+    console.log("Object query", query);
+
+    // const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
+    // if (cacheResults) {
+    //     const data = JSON.parse(cacheResults);
+    //     return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
+    // }
     try {
-        const products = await Product.find({ userId }).select('-image');
+        const totalCount = await Product.countDocuments({ userId: id }).lean();
+        const products = await Product.find({ userId: id })
+            .select('-image')
+            .limit(resultsPerPage)
+            .skip((page - 1) * resultsPerPage)
+            .lean();
 
         // Handle the case where no products are found
-        if (products && products.length === 0) {
-            return res.status(404).json({ success: true, message: "No products found", products: [] });
+        if (!products || products.length === 0) {
+            console.log("No products found for user ID:", id);
+            return customResponse(res, 404, 404, products, "No products found"); // Added return to prevent further execution
         }
 
         console.log("Products fetched successfully:", products);
-        return res.status(200).json({ success: true, message: 'Fetched all products successfully', products: products });
+        const payload = {
+            totalCount,
+            PerPage: resultsPerPage,
+            currentPage: page,
+            product: products,
+        };
 
-    } catch (error) {
-        console.error("Error in fetching all products:", error.message);
-        return res.status(500).json({ success: false, message: "Failed to fetch all products", error: error.message });
+        // await redis.set(`Product ${id}-${page}-${resultsPerPage}`, JSON.stringify(payload));
+        return success(res, "Successfully fetched all products", 200, payload); // Added return to prevent further execution
+
+    } catch (err) {
+        console.error("Error in fetching all products:", err.message);
+
+        return error(res, "Error in fetching all products", 500); // Ensure only one error response is sent
     }
-}
+};
+
+
 
 
 // DEFINE FUNCTION TO GET PRODUCT BY PRODUCT ID
 
 const ProductGetByIdController = async (req, res) => {
-    const { userId } = req.body
+
     const { id } = req.params
+    const { id: userId } = req.user
+
     try {
-        const product = await Product.find({ _id: id })
+        const product = await Product.find({ userId, _id: id })
+
         console.log("product", product)
 
         if (!product) {
             return res.json({ success: false, message: 'product not found', })
         }
         if (product) {
-            const productById = await product.find((product) => product._id == id)
-
-            return res.json({ success: true, message: 'product fetch successfully', product: productById });
+            success(res, "success", 200, product)
         }
     } catch (error) {
         return res.json({ success: false, error: error });
@@ -94,7 +116,9 @@ const ProductGetByIdController = async (req, res) => {
 const ProductUpdateController = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
-
+    const { id: userId } = req.user;
+    const updatedData = { ...updateData, userId };
+    console.log("updated data: ", updatedData)
     try {
         // Find the product by id
         const product = await Product.findById(id);
@@ -105,10 +129,11 @@ const ProductUpdateController = async (req, res) => {
         }
 
         // Update the product with new data
-        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+        const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
         // Return the updated product
-        return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
+        success(res, 'Product updated successfully', 200, updatedProduct)
+        // return res.status(200).json({ success: true, message: 'Product updated successfully', product: updatedProduct });
 
     } catch (error) {
         console.error("Error updating product:", error.message);
@@ -136,7 +161,8 @@ const ProductDeleteController = async (req, res) => {
         await Product.findByIdAndDelete(id);
 
         // Return success response
-        return res.status(200).json({ success: true, message: 'Product deleted successfully' });
+        success(res, 'Product deleted successfully', 200)
+        // return res.status(200).json({ success: true, message: 'Product deleted successfully' });
 
     } catch (error) {
         console.error("Error deleting product:", error.message);

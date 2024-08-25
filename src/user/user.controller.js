@@ -1,8 +1,9 @@
 const { default: mongoose } = require("mongoose");
 const { validateUserInput } = require("../utility/validation");
-const User = require("./Auth.model");
+const User = require("./user.model");
 const bcrypt = require("bcryptjs");
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { error, success } = require("../helper/CommonResponse");
 const jwtSecret = process.env.JWT_SECRET
 
 // DEFINE SIGNUP FUNCTION 
@@ -26,17 +27,19 @@ const SignupController = async (req, res) => {
         // Check for duplicate email
         const existingUser = await User.findOne({ email: user.email });
         if (existingUser) {
-            return res.status(409).json({ status: 409, error: "Email is already registered" });
+            error(res,"Email is already in use",409)
         }
 
         // Create new user
         const response = await User.create(userData);
+
+        
         if (response) {
-            return res.status(201).json(response);
+            success(res,"User created successfully",201,response)
         }
-    } catch (error) {
+    } catch (err) {
         console.log("User is not created");
-        return res.status(500).json({ status: 500, error: error.message });
+        error(res,"User is not created",500)
     }
 };
 
@@ -78,16 +81,10 @@ const LoginController = async (req, res) => {
         const userResponse = {
             id: response._id,
             email: response.email,
-            name: response.name
+            name: response.name,
+            token
         };
-
-        return res.json({
-            status: true,
-            data: {
-                user: userResponse,
-                token: token
-            }
-        });
+          success(res,"User Logged in successfully",200,userResponse);
     } catch (error) {
         console.log("error", error);
         return res.status(403).json({ status: false, error: error.message });
@@ -161,7 +158,7 @@ const GetAllUsersController = async (req, res, next) => {
         if (!result) {
             return res.status(404).json({ status: false, message: "No Users found" });
         }
-        return res.json({ status: true, data: result });
+        success(res,"Successfully fetched all users",200,result)
     } catch (error) {
 
         return res.status(500).json({ status: false, error: error });
