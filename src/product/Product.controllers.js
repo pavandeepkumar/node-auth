@@ -1,5 +1,9 @@
+const redis = require("../config/RadisConnection");
 const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
+
+
+
 
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res, next) => {
@@ -14,7 +18,7 @@ const ProductCreateController = async (req, res, next) => {
             userId, name, price, image, description, discount, productDetails
         })
         if (response) {
-            
+
             success(res, "success", 201, response, "Product created successfully")
         }
         else {
@@ -32,27 +36,38 @@ const ProductCreateController = async (req, res, next) => {
 
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
+
     if (!req.user || !req.user.id) {
         console.error("Invalid or missing user ID in request");
-        error(res, "Invalid or missing Token", 400)
+        return error(res, "Invalid or missing Token", 400); // Added return to prevent further execution
     }
 
     const { id } = req.user;
     const resultsPerPage = req.query.limit ?? 10;
-    console.log("result per page", resultsPerPage)
+    console.log("Results per page", resultsPerPage);
 
     let page = req.query.page >= 1 ? req.query.page : 1;
-    console.log("page", page)
+    console.log("Page", page);
     const query = req.query.search;
-    console.log("object query", query)
-    const totalCount = await Product.countDocuments({ userId: id }).lean()
+    console.log("Object query", query);
+
+    const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
+    if (cacheResults) {
+        const data = JSON.parse(cacheResults);
+        return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
+    }
     try {
-        const products = await Product.find({ userId: id }).select('-image').limit(resultsPerPage).skip((page - 1) * resultsPerPage).lean();
+        const totalCount = await Product.countDocuments({ userId: id }).lean();
+        const products = await Product.find({ userId: id })
+            .select('-image')
+            .limit(resultsPerPage)
+            .skip((page - 1) * resultsPerPage)
+            .lean();
 
         // Handle the case where no products are found
         if (!products || products.length === 0) {
             console.log("No products found for user ID:", id);
-            customResponse(res, 404, 404, products, "No products found ")
+            return customResponse(res, 404, 404, products, "No products found"); // Added return to prevent further execution
         }
 
         console.log("Products fetched successfully:", products);
@@ -60,19 +75,19 @@ const ProductGetAllController = async (req, res) => {
             totalCount,
             PerPage: resultsPerPage,
             currentPage: page,
-            product: products
-        }
-        success(res, "Successfully fetched all products", 200, payload)
+            product: products,
+        };
+
+        await redis.set(`Product ${id}-${page}-${resultsPerPage}`, JSON.stringify(payload));
+        return success(res, "Successfully fetched all products", 200, payload); // Added return to prevent further execution
 
     } catch (err) {
-        console.error("Error in fetching all products:", error.message);
+        console.error("Error in fetching all products:", err.message);
 
-        error(res, "Error in fetching all products", 500)
-
-        // General error handling
-        return res.status(500).json({ success: false, message: "Failed to fetch all products", error: error.message });
+        return error(res, "Error in fetching all products", 500); // Ensure only one error response is sent
     }
-}
+};
+
 
 
 
@@ -149,7 +164,7 @@ const ProductDeleteController = async (req, res) => {
         await Product.findByIdAndDelete(id);
 
         // Return success response
-        success(res, 'Product deleted successfully',200)
+        success(res, 'Product deleted successfully', 200)
         // return res.status(200).json({ success: true, message: 'Product deleted successfully' });
 
     } catch (error) {
