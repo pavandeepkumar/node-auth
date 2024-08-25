@@ -1,4 +1,4 @@
-const redis = require("../config/RadisConnection");
+// const redis = require("../config/RadisConnection");
 const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
 
