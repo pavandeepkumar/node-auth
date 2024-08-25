@@ -2,9 +2,6 @@
 const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
 
-
-
-
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res, next) => {
     const { name, price, image, description, discount, productDetails } = req.body;

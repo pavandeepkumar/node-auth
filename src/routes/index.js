@@ -1,4 +1,3 @@
-const { corsMiddleware} = require("../middleware");
 const authenticateJWT = require("../middleware/Auth.middleware");
 const { productRouter } = require("../product");
 const { userRouter } = require("../user");

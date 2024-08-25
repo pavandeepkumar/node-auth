@@ -1,6 +1,4 @@
 const express = require('express')
-
-const { authenticateJWT } = require('../middleware');
 const { ProductCreateController, ProductGetAllController, ProductGetByIdController, ProductDeleteController, ProductUpdateController } = require('./index.js');
 const productRouter = express.Router();
 productRouter.post('/create', ProductCreateController);
