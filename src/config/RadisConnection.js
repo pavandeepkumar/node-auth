@@ -5,15 +5,4 @@ const Redis = require("ioredis");
 // We are going to cover how to specify connection options soon.
 const redis = new Redis();
 
-// const redisConnection=async()=>{
-//     let redisClient=redis.createClient()
-
-//     redisClient.on("error",(err)=>{
-//         console.log("Error: ", err)
-       
-//     })
-//     await redisClient.connect()
-//     console.log("redis connection established")
-// }
-
 module.exports=redis

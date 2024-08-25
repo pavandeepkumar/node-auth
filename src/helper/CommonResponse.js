@@ -1,7 +1,7 @@
 const messages=require('../constants/message')
-const getMessage = (code, defaultcode) => (messages[code] ? messages[code] : messages[defaultcode]);
+const getMessage = (code, defaultCode) => (messages[code] ? messages[code] : messages[defaultCode]);
 
-const getErrorMessage = (code, defaultcode) => getMessage(code, defaultcode);
+const getErrorMessage = (code, defaultCode) => getMessage(code, defaultCode);
 
 const error = (res, code = "", statusCode = 400) => {
     const resData = {
