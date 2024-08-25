@@ -51,11 +51,11 @@ const ProductGetAllController = async (req, res) => {
     const query = req.query.search;
     console.log("Object query", query);
 
-    const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
-    if (cacheResults) {
-        const data = JSON.parse(cacheResults);
-        return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
-    }
+    // const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
+    // if (cacheResults) {
+    //     const data = JSON.parse(cacheResults);
+    //     return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
+    // }
     try {
         const totalCount = await Product.countDocuments({ userId: id }).lean();
         const products = await Product.find({ userId: id })
@@ -78,7 +78,7 @@ const ProductGetAllController = async (req, res) => {
             product: products,
         };
 
-        await redis.set(`Product ${id}-${page}-${resultsPerPage}`, JSON.stringify(payload));
+        // await redis.set(`Product ${id}-${page}-${resultsPerPage}`, JSON.stringify(payload));
         return success(res, "Successfully fetched all products", 200, payload); // Added return to prevent further execution
 
     } catch (err) {
