@@ -6,4 +6,4 @@ productRouter.get('/list',  ProductGetAllController);
 productRouter.get(`/list/:id`, ProductGetByIdController);
 productRouter.delete(`/delete/:id`, ProductDeleteController);
 productRouter.put(`/update/:id`, ProductUpdateController);
-module.exports = { productRouter }
+module.exports =  productRouter 
