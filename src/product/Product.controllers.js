@@ -1,6 +1,7 @@
 // const redis = require("../config/RadisConnection");
 const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
+const product = require("./product.services");
 
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res, next) => {
@@ -11,9 +12,16 @@ const ProductCreateController = async (req, res, next) => {
         error(res, "validation failed", 400)
     }
     try {
-        const response = await Product.create({
-            userId, name, price, image, description, discount, productDetails
-        })
+        const payload = {
+            userId,
+            name,
+            price,
+            image,
+            description,
+            discount,
+            productDetails
+        }
+        const response = await product.add(payload)
         if (response) {
 
             success(res, "success", 201, response, "Product created successfully")
@@ -44,9 +52,13 @@ const ProductGetAllController = async (req, res) => {
     console.log("Results per page", resultsPerPage);
 
     let page = req.query.page >= 1 ? req.query.page : 1;
-    console.log("Page", page);
+    const sort = req.query.createdAt
+    const sortName = req.query.name
     const query = req.query.search;
-    console.log("Object query", query);
+    const skipCount = (page - 1) * resultsPerPage
+    const sortByCreatedAt = sort == 'ASC' ? 1 : -1
+    const sortByName = sortName == 'DESC' ? -1 : 1
+
 
     // const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
     // if (cacheResults) {
@@ -54,13 +66,8 @@ const ProductGetAllController = async (req, res) => {
     //     return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
     // }
     try {
-        const totalCount = await Product.countDocuments({ userId: id }).lean();
-        const products = await Product.find({ userId: id })
-            .select('-image')
-            .limit(resultsPerPage)
-            .skip((page - 1) * resultsPerPage)
-            .lean();
-
+        const products = await product.list({ id,query, resultsPerPage, skipCount, sortByCreatedAt,sortByName })
+        const totalCount = await products.length;
         // Handle the case where no products are found
         if (!products || products.length === 0) {
             console.log("No products found for user ID:", id);

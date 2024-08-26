@@ -26,7 +26,7 @@ class role {
      * List
      */
     static async list(query) {
-        return await RoleManagement.find(query).lean();
+        return await RoleManagement.find(query).sort({ createdAt: -1 }).lean();
     }
 
     /**

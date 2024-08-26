@@ -1,13 +1,13 @@
 
-const { ProductCreateController, ProductDeleteController, ProductGetAllController, ProductGetByIdController, ProductUpdateController } = require("./product.controllers.js");
+const product = require("./product.controllers.js");
 const Product = require("./product.model");
 const productRouter = require("./product.routes.js");
 module.exports = {
     Product,
     productRouter,
-    ProductCreateController,
-    ProductDeleteController,
-    ProductGetAllController,
-    ProductGetByIdController,
-    ProductUpdateController
+    create: product.ProductCreateController,
+    delete: product.ProductDeleteController,
+    list: product.ProductGetAllController,
+    getById: product.ProductGetByIdController,
+    update: product.ProductUpdateController
 }
