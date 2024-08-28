@@ -66,15 +66,13 @@ const ProductGetAllController = async (req, res) => {
     //     return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
     // }
     try {
-        const products = await product.list({ id,query, resultsPerPage, skipCount, sortByCreatedAt,sortByName })
-        const totalCount = await products.length;
+        const products = await product.list({ id, query, resultsPerPage, skipCount, sortByCreatedAt, sortByName })
+        const totalCount = await product.count(id)
         // Handle the case where no products are found
         if (!products || products.length === 0) {
             console.log("No products found for user ID:", id);
             return customResponse(res, 404, 404, products, "No products found"); // Added return to prevent further execution
         }
-
-        console.log("Products fetched successfully:", products);
         const payload = {
             totalCount,
             PerPage: resultsPerPage,

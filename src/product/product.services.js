@@ -26,7 +26,7 @@ class product {
     /**
      * List
      */
-    static async list({ id, query, resultsPerPage, skipCount, sortByCreatedAt }) {
+    static async list({ id, query = "", resultsPerPage, skipCount, sortByCreatedAt }) {
         return await Product.find({
             userId: id, "$or": [
                 {
