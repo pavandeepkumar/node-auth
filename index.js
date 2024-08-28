@@ -10,6 +10,12 @@ app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 initialize(app);
+app.get('/', (req, res) => {
+    return res.json({
+        success: true,
+        data: "success"
+    })
+})
 PORT = process.env.PORT || 8050;
 MongoDBConnection()
 // redisConnection()
