@@ -71,8 +71,27 @@ class product {
     /**
    * count Document
    */
-    static async count(id) {
-        return await Product.countDocuments({ userId: id }).lean();
+    static async count({ id, query = "" }) {
+        return await Product.countDocuments({
+            userId: id, "$or": [
+                {
+                    "name": {
+                        $regex: query
+                    },
+
+                },
+                {
+                    "description": {
+                        $regex: query
+                    }
+                },
+                {
+                    "productDetails": {
+                        $regex: query
+                    }
+                }
+            ]
+        }).lean();
     }
 }
 module.exports = product

@@ -39,6 +39,7 @@ const ProductCreateController = async (req, res, next) => {
 
 // DEFINE FUNCTION TO GET ALL PRODUCT
 
+
 const ProductGetAllController = async (req, res) => {
     console.log("Incoming request to fetch all products");
 
@@ -67,7 +68,7 @@ const ProductGetAllController = async (req, res) => {
     // }
     try {
         const products = await product.list({ id, query, resultsPerPage, skipCount, sortByCreatedAt, sortByName })
-        const totalCount = await product.count(id)
+        let totalCount = await product.count({ id, query })
         // Handle the case where no products are found
         if (!products || products.length === 0) {
             console.log("No products found for user ID:", id);
