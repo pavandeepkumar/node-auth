@@ -65,7 +65,7 @@ const ProductGetAllController = async (req, res) => {
     // const cacheKey = `Product:${id}-${page}-${resultsPerPage}-${query}-${sortByCreatedAt}-${sortByName}`;
 
     try {
-        const cachedData = await client.get(cacheKey);
+        // const cachedData = await client.get(cacheKey);
         // if (cachedData) {
         //     console.log("Cache hit");
         //     const data = JSON.parse(cachedData);
