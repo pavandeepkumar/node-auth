@@ -62,15 +62,15 @@ const ProductGetAllController = async (req, res) => {
     const sortByCreatedAt = sort == 'ASC' ? 1 : -1;
     const sortByName = sortName == 'DESC' ? -1 : 1;
 
-    const cacheKey = `Product:${id}-${page}-${resultsPerPage}-${query}-${sortByCreatedAt}-${sortByName}`;
+    // const cacheKey = `Product:${id}-${page}-${resultsPerPage}-${query}-${sortByCreatedAt}-${sortByName}`;
 
     try {
         const cachedData = await client.get(cacheKey);
-        if (cachedData) {
-            console.log("Cache hit");
-            const data = JSON.parse(cachedData);
-            return success(res, "Successfully fetched all products (from cache)", 200, data);
-        }
+        // if (cachedData) {
+        //     console.log("Cache hit");
+        //     const data = JSON.parse(cachedData);
+        //     return success(res, "Successfully fetched all products (from cache)", 200, data);
+        // }
 
         console.log("Cache miss");
 
@@ -88,9 +88,9 @@ const ProductGetAllController = async (req, res) => {
             product: products,
         };
 
-        await client.set(cacheKey, JSON.stringify(payload), {
-            EX: 3600 // 1 hour expiration
-        });
+        // await client.set(cacheKey, JSON.stringify(payload), {
+        //     EX: 3600 // 1 hour expiration
+        // });
 
         return success(res, "Successfully fetched all products", 200, payload);
 
