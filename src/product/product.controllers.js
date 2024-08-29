@@ -1,7 +1,11 @@
 // const redis = require("../config/RadisConnection");
+const client = require("../config/RadisConnection");
 const { success, customResponse, error, unAuthentication } = require("../helper/CommonResponse");
 const Product = require("./product.model");
 const product = require("./product.services");
+const { createClient } = require('redis');
+
+
 
 // DEFINE PRODUCT CREATE CONTROLLER
 const ProductCreateController = async (req, res, next) => {
@@ -45,35 +49,38 @@ const ProductGetAllController = async (req, res) => {
 
     if (!req.user || !req.user.id) {
         console.error("Invalid or missing user ID in request");
-        return error(res, "Invalid or missing Token", 400); // Added return to prevent further execution
+        return error(res, "Invalid or missing Token", 400);
     }
 
     const { id } = req.user;
     const resultsPerPage = req.query.limit ?? 10;
-    console.log("Results per page", resultsPerPage);
-
     let page = req.query.page >= 1 ? req.query.page : 1;
-    const sort = req.query.createdAt
-    const sortName = req.query.name
+    const sort = req.query.createdAt;
+    const sortName = req.query.name;
     const query = req.query.search;
-    const skipCount = (page - 1) * resultsPerPage
-    const sortByCreatedAt = sort == 'ASC' ? 1 : -1
-    const sortByName = sortName == 'DESC' ? -1 : 1
+    const skipCount = (page - 1) * resultsPerPage;
+    const sortByCreatedAt = sort == 'ASC' ? 1 : -1;
+    const sortByName = sortName == 'DESC' ? -1 : 1;
 
+    const cacheKey = `Product:${id}-${page}-${resultsPerPage}-${query}-${sortByCreatedAt}-${sortByName}`;
 
-    // const cacheResults = await redis.get(`Product ${id}-${page}-${resultsPerPage}`);
-    // if (cacheResults) {
-    //     const data = JSON.parse(cacheResults);
-    //     return success(res, "Successfully fetched all products", 200, data); // Added return to prevent further execution
-    // }
     try {
-        const products = await product.list({ id, query, resultsPerPage, skipCount, sortByCreatedAt, sortByName })
-        let totalCount = await product.count({ id, query })
-        // Handle the case where no products are found
-        if (!products || products.length === 0) {
-            console.log("No products found for user ID:", id);
-            return customResponse(res, 404, 404, products, "No products found"); // Added return to prevent further execution
+        const cachedData = await client.get(cacheKey);
+        if (cachedData) {
+            console.log("Cache hit");
+            const data = JSON.parse(cachedData);
+            return success(res, "Successfully fetched all products (from cache)", 200, data);
         }
+
+        console.log("Cache miss");
+
+        const products = await product.list({ id, query, resultsPerPage, skipCount, sortByCreatedAt, sortByName });
+        let totalCount = await product.count({ id, query });
+
+        if (!products || products.length === 0) {
+            return customResponse(res, 404, 404, products, "No products found");
+        }
+
         const payload = {
             totalCount,
             PerPage: resultsPerPage,
@@ -81,13 +88,15 @@ const ProductGetAllController = async (req, res) => {
             product: products,
         };
 
-        // await redis.set(`Product ${id}-${page}-${resultsPerPage}`, JSON.stringify(payload));
-        return success(res, "Successfully fetched all products", 200, payload); // Added return to prevent further execution
+        await client.set(cacheKey, JSON.stringify(payload), {
+            EX: 3600 // 1 hour expiration
+        });
+
+        return success(res, "Successfully fetched all products", 200, payload);
 
     } catch (err) {
         console.error("Error in fetching all products:", err.message);
-
-        return error(res, "Error in fetching all products", 500); // Ensure only one error response is sent
+        return error(res, "Error in fetching all products", 500);
     }
 };
 
